@@ -1,67 +1,64 @@
 import { useEffect, useState } from 'react';
-import spellsData from './spells_final_superclean.json';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
+import spellsData from './assets/spells.json';
+import { Theme, TextField, Select, Box, Flex, Heading, Text } from '@radix-ui/themes';
+import '@radix-ui/themes/styles.css';
 
 function App() {
-	const [search, setSearch] = useState('');
-	const [filteredSpells, setFilteredSpells] = useState(spellsData);
-
-	useEffect(() => {
-		setFilteredSpells(
-			spellsData.filter(
-				(spell) =>
-					spell.name_ru.toLowerCase().includes(search.toLowerCase()) ||
-					spell.name.toLowerCase().includes(search.toLowerCase()),
-			),
-		);
-	}, [search]);
-
 	return (
-		<div className="max-w-screen-lg mx-auto p-4">
-			<h1 className="text-3xl font-bold mb-4">📖 Заклинания D&D 2024</h1>
+		<Theme accentColor="jade" grayColor="gray" panelBackground="solid">
+			<Box maxWidth="600px" mx="auto" p="4">
+				<Box mt="5">
+					<Flex direction="column" gap="4">
+						{filteredSpells.map((spell) => (
+							<Box
+								key={spell.name}
+								p="4"
+								style={{ border: '1px solid var(--gray-a5)', borderRadius: 'var(--radius-3)' }}>
+								<Heading size="4" mb="1">
+									{spell.name_ru}{' '}
+									<Text color="gray" size="2">
+										[{spell.name}]
+									</Text>
+								</Heading>
+								<Text size="2" mb="2" color="gray">
+									{spell.level === 0 ? 'Заговор' : `${spell.level} уровень`}, {spell.school}
+								</Text>
 
-			<Input
-				type="text"
-				placeholder="Поиск по названию..."
-				value={search}
-				onChange={(e) => setSearch(e.target.value)}
-				className="mb-6"
-			/>
+								<Text size="2">
+									<strong>Время:</strong> {spell.casting_time}
+								</Text>
+								<br />
+								<Text size="2">
+									<strong>Дистанция:</strong> {spell.range}
+								</Text>
+								<br />
+								<Text size="2">
+									<strong>Компоненты:</strong> {spell.components.join(', ')}
+								</Text>
+								<br />
+								<Text size="2">
+									<strong>Длительность:</strong> {spell.duration}
+								</Text>
 
-			<div className="grid gap-4">
-				{filteredSpells.map((spell, idx) => (
-					<Card key={idx}>
-						<CardContent className="p-4">
-							<h2 className="text-xl font-semibold">
-								{spell.name_ru} <span className="text-sm text-muted-foreground">[{spell.name}]</span>
-							</h2>
-							<p className="text-sm italic mb-2">
-								{spell.level === 0 ? 'Заговор' : `${spell.level} уровень`}, {spell.school}
-							</p>
-
-							<p className="text-sm mb-1">
-								<strong>Время:</strong> {spell.casting_time}
-							</p>
-							<p className="text-sm mb-1">
-								<strong>Дистанция:</strong> {spell.range}
-							</p>
-							<p className="text-sm mb-1">
-								<strong>Компоненты:</strong> {spell.components.join(', ')}
-							</p>
-							<p className="text-sm mb-1">
-								<strong>Длительность:</strong> {spell.duration}
-							</p>
-
-							<p className="text-sm mt-2 whitespace-pre-line">{spell.description}</p>
-							{spell.improvement && (
-								<p className="text-sm mt-2 text-blue-700 whitespace-pre-line font-medium">🔹 {spell.improvement}</p>
-							)}
-						</CardContent>
-					</Card>
-				))}
-			</div>
-		</div>
+								<Box mt="2">
+									<Text size="2" as="p" style={{ whiteSpace: 'pre-line' }}>
+										{spell.description}
+									</Text>
+									{spell.improvement && (
+										<Text
+											size="2"
+											as="p"
+											style={{ whiteSpace: 'pre-line', color: 'var(--jade-11)', marginTop: '0.5rem', fontWeight: 500 }}>
+											🔹 {spell.improvement}
+										</Text>
+									)}
+								</Box>
+							</Box>
+						))}
+					</Flex>
+				</Box>
+			</Box>
+		</Theme>
 	);
 }
 

@@ -1,7 +1,3 @@
-# DnD-5 info web-site
-
-Information for the Dangeon and Dragons 5th edition, version 2024 in russian language
-
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
