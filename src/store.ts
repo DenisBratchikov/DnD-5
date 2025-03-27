@@ -1,9 +1,23 @@
 import { create } from 'zustand';
 import spells from './assets/spells.json';
+import type { Spell } from './types';
 
 type FilterKey = 'level' | 'school' | 'class';
+type Filter = { filter: Record<FilterKey, string> };
+type Search = { search: string };
+type SpellsData = Spell[];
+type FilterData = { filterData: Record<FilterKey, string[]> };
 
-const getDefaultOptions = () => {
+export const defaultFilterOptions: Filter & Search = {
+	search: '',
+	filter: {
+		level: 'all',
+		school: 'all',
+		class: 'all',
+	},
+};
+
+const getFilterData = (): FilterData => {
 	const data = spells.reduce(
 		(acc, curr) => {
 			acc.levels.add(curr.level);
@@ -16,50 +30,65 @@ const getDefaultOptions = () => {
 		{ levels: new Set<number>(), schools: new Set<string>(), classes: new Set<string>() },
 	);
 
-	const filters = new Map<FilterKey, { current: string; values: string[] }>();
-	filters.set('level', {
-		current: 'all',
-		values: Array.from(data.levels)
-			.sort((a, b) => a - b)
-			.map(String),
-	});
-	filters.set('school', { current: 'all', values: Array.from(data.schools) });
-	filters.set('class', { current: 'all', values: Array.from(data.classes) });
-
 	return {
-		spells,
-		search: '',
-		filters,
+		filterData: {
+			level: Array.from(data.levels)
+				.sort((a, b) => a - b)
+				.map(String),
+			school: Array.from(data.schools),
+			class: Array.from(data.classes),
+		},
 	};
 };
 
-type SpellStore = ReturnType<typeof getDefaultOptions>;
+const getFilteredSpells = ({ search, filter }: Search & Filter): SpellsData => {
+	return spells.filter((spell) => {
+		const matchName =
+			spell.name_ru.toLowerCase().includes(search.toLowerCase()) ||
+			spell.name.toLowerCase().includes(search.toLowerCase());
+		const matchLevel = filter.level === 'all' || `${spell.level}` === filter.level;
+		const matchSchool = filter.school === 'all' || spell.school === filter.school;
+		const matchClass = filter.class === 'all' || spell.classes.includes(filter.class);
+		return matchName && matchLevel && matchSchool && matchClass;
+	});
+};
 
-export const useSpellsStore = create<SpellStore>((set, get) => ({
-	...getDefaultOptions(),
+interface SpellsStore extends Filter, Search, FilterData {
+	spells: SpellsData;
+	setSearch: (search: string) => void;
+	setFilter: (key: FilterKey, value: string) => void;
+	reset: VoidFunction;
+}
 
-	setSearch: (search: string) => set({ search }),
+export const useSpellsStore = create<SpellsStore>((set, get) => ({
+	...defaultFilterOptions,
+	...getFilterData(),
 
-	setFilter: (key: FilterKey, value: string) => {
-		const filter = get().filters.get(key);
-		const newFilter = {
-			...filter,
-			current: value,
-		};
+	spells,
+
+	setSearch: (search: string) => {
+		set({ search, spells: getFilteredSpells({ ...get(), search }) });
 	},
 
-	get filteredSpells() {
-		const { spells, search, filter } = get();
-		return spells.filter((spell) => {
-			const matchName =
-				spell.name_ru.toLowerCase().includes(search.toLowerCase()) ||
-				spell.name.toLowerCase().includes(search.toLowerCase());
-			const matchLevel = filter.level === 'all' || spell.level === Number(filter.level);
-			const matchSchool = filter.school === 'all' || spell.school === filter.school;
-			const matchClass = filter.class === 'all' || spell.classes.includes(filter.class);
-			return matchName && matchLevel && matchSchool && matchClass;
-		});
+	setFilter: (key: FilterKey, value: string) => {
+		const filter = {
+			...get().filter,
+			[key]: value,
+		};
+		set({ filter, spells: getFilteredSpells({ ...get(), filter }) });
+	},
+
+	reset: () => {
+		set({ ...defaultFilterOptions, spells });
 	},
 }));
 
-export const spellsStoreSelector = {};
+export const spellsStoreSelector = {
+	search: (state: SpellsStore): SpellsStore['search'] => state.search,
+	filter: (state: SpellsStore): SpellsStore['filter'] => state.filter,
+	filterData: (state: SpellsStore): SpellsStore['filterData'] => state.filterData,
+	spells: (state: SpellsStore): SpellsStore['spells'] => state.spells,
+	reset: (state: SpellsStore): SpellsStore['reset'] => state.reset,
+	setSearch: (state: SpellsStore): SpellsStore['setSearch'] => state.setSearch,
+	setFilter: (state: SpellsStore): SpellsStore['setFilter'] => state.setFilter,
+};
