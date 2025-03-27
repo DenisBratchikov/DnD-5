@@ -22,7 +22,7 @@ const getFilterData = (): FilterData => {
 		(acc, curr) => {
 			acc.levels.add(curr.level);
 			acc.schools.add(curr.school);
-			for (const c of acc.classes) {
+			for (const c of curr.classes) {
 				acc.classes.add(c);
 			}
 			return acc;
